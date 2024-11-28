@@ -1,5 +1,5 @@
 ## 👋 Hi, I'm Tolga Buyuktanir!
-### Welcome to my GitHub profile! I'm a machine learning and big data Developer passionate about smart caching, prefetching, and data-unaware learning. 🌟
+### Welcome to my GitHub profile! I'm a machine learning and big data developer passionate about smart caching, prefetching, and data-unaware learning. 🌟
 ---
 ### Tools
 ![Python](https://img.shields.io/badge/-Python-000?style=flat-square&logo=Python)
