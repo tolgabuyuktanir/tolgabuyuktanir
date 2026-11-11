@@ -91,21 +91,25 @@ query($login: String!, $after: String) {
     repositories(ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], isFork: false,
                  first: 50, after: $after) {
       pageInfo { hasNextPage endCursor }
-      nodes { nameWithOwner defaultBranchRef { name } }
+      nodes { nameWithOwner owner { login } defaultBranchRef { name } }
     }
   }
 }
 """
 
+# In the user's own repositories every commit counts except those made by bots
+# (including this workflow's own "Update profile cards" commits). That keeps
+# work committed under another identity, such as AI coding agents, on the
+# chart. In other people's repositories only the user's own commits count.
 HISTORY_Q = """
-query($owner: String!, $name: String!, $branch: String!, $uid: ID!, $after: String) {
+query($owner: String!, $name: String!, $branch: String!, $after: String) {
   repository(owner: $owner, name: $name) {
     ref(qualifiedName: $branch) {
       target {
         ... on Commit {
-          history(author: {id: $uid}, first: 100, after: $after) {
+          history(first: 100, after: $after) {
             pageInfo { hasNextPage endCursor }
-            nodes { committedDate }
+            nodes { committedDate author { name email user { login } } }
           }
         }
       }
@@ -113,6 +117,31 @@ query($owner: String!, $name: String!, $branch: String!, $uid: ID!, $after: Stri
   }
 }
 """
+
+AUTHORED_HISTORY_Q = """
+query($owner: String!, $name: String!, $branch: String!, $uid: ID!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    ref(qualifiedName: $branch) {
+      target {
+        ... on Commit {
+          history(author: {id: $uid}, first: 100, after: $after) {
+            pageInfo { hasNextPage endCursor }
+            nodes { committedDate author { name email user { login } } }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def is_bot(author: dict | None) -> bool:
+    author = author or {}
+    login = ((author.get("user") or {}).get("login") or "").lower()
+    name = (author.get("name") or "").lower()
+    email = (author.get("email") or "").lower()
+    return "[bot]" in login or "[bot]" in name or "[bot]" in email
 
 
 def paginate(query: str, variables: dict, path: list[str]):
@@ -156,9 +185,15 @@ def fetch() -> dict:
         if not repo["defaultBranchRef"]:
             continue  # empty repository
         owner, name = repo["nameWithOwner"].split("/", 1)
-        variables = {"owner": owner, "name": name, "uid": user["id"],
+        variables = {"owner": owner, "name": name,
                      "branch": f"refs/heads/{repo['defaultBranchRef']['name']}"}
-        for c in paginate(HISTORY_Q, variables, ["repository", "ref", "target", "history"]):
+        if repo["owner"]["login"].lower() == LOGIN.lower():
+            query = HISTORY_Q
+        else:
+            query, variables["uid"] = AUTHORED_HISTORY_Q, user["id"]
+        for c in paginate(query, variables, ["repository", "ref", "target", "history"]):
+            if is_bot(c["author"]):
+                continue
             when = dt.datetime.fromisoformat(c["committedDate"].replace("Z", "+00:00"))
             key = when.astimezone(TZ).date().isoformat()
             days[key] = days.get(key, 0) + 1
