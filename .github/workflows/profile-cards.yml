@@ -26,7 +26,9 @@ jobs:
       - name: Render SVG cards
         run: python3 .github/scripts/generate_cards.py
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PROFILE_TOKEN (optional): a fine-grained token with read access to your
+          # private repos, so their commits count too. Falls back to GITHUB_TOKEN.
+          GITHUB_TOKEN: ${{ secrets.PROFILE_TOKEN || secrets.GITHUB_TOKEN }}
           GH_USER: ${{ github.repository_owner }}
 
       - name: Commit changes

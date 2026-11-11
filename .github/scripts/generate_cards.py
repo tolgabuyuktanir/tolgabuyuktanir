@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """Render the profile README's stat cards as static SVGs.
 
-Runs in GitHub Actions with the built-in GITHUB_TOKEN, so the README no longer
-depends on third-party card services (which are often rate-limited or down).
+Runs in GitHub Actions, so the README no longer depends on third-party card
+services (which are often rate-limited or down). The heatmap and streak count
+commits the user authored on each repository's default branch. The built-in
+GITHUB_TOKEN sees public repositories only; set a PROFILE_TOKEN secret to
+include private ones.
 Without a token it writes empty placeholder cards, which is handy for
 previewing the layout locally.
 
 Outputs (in ./assets):
   stats.svg          stars, commits, PRs, issues, repos, contributed-to
   top-langs.svg      most used languages across owned, non-fork public repos
-  streak.svg         total contributions, current and longest streak
-  contributions.svg  contribution heatmap for the last 53 weeks
+  streak.svg         total commits, current and longest commit streak
+  commits.svg        commit heatmap for the last 53 weeks
 """
 from __future__ import annotations
 
@@ -19,11 +22,14 @@ import json
 import os
 import sys
 import urllib.request
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from xml.sax.saxutils import escape
 
 LOGIN = os.environ.get("GH_USER", "tolgabuyuktanir")
 TOKEN = os.environ.get("GITHUB_TOKEN", "")
+# Commits are bucketed into days in this time zone.
+TZ = ZoneInfo(os.environ.get("CARDS_TZ", "Europe/Istanbul"))
 OUT = Path(os.environ.get("CARDS_OUT", "assets"))
 # Languages that would skew the chart (e.g. notebook outputs) can be listed here.
 EXCLUDED_LANGS = {s.strip() for s in os.environ.get("EXCLUDED_LANGS", "").split(",") if s.strip()}
@@ -58,7 +64,7 @@ def gql(query: str, variables: dict) -> dict:
 PROFILE_Q = """
 query($login: String!, $after: String) {
   user(login: $login) {
-    createdAt
+    id
     pullRequests { totalCount }
     issues { totalCount }
     repositoriesContributedTo(contributionTypes: [COMMIT, PULL_REQUEST, ISSUE, REPOSITORY]) { totalCount }
@@ -76,17 +82,51 @@ query($login: String!, $after: String) {
 }
 """
 
-YEAR_Q = """
-query($login: String!, $from: DateTime!, $to: DateTime!) {
+# Every non-fork repo the token can see that the user owns or works in. With the
+# default GITHUB_TOKEN that is public repos only; a PROFILE_TOKEN secret adds
+# private ones (only their commit counts and dates are used, never names).
+COMMIT_REPOS_Q = """
+query($login: String!, $after: String) {
   user(login: $login) {
-    contributionsCollection(from: $from, to: $to) {
-      totalCommitContributions
-      restrictedContributionsCount
-      contributionCalendar { weeks { contributionDays { date contributionCount } } }
+    repositories(ownerAffiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER], isFork: false,
+                 first: 50, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes { nameWithOwner defaultBranchRef { name } }
     }
   }
 }
 """
+
+HISTORY_Q = """
+query($owner: String!, $name: String!, $branch: String!, $uid: ID!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    ref(qualifiedName: $branch) {
+      target {
+        ... on Commit {
+          history(author: {id: $uid}, first: 100, after: $after) {
+            pageInfo { hasNextPage endCursor }
+            nodes { committedDate }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def paginate(query: str, variables: dict, path: list[str]):
+    after = None
+    while True:
+        node = gql(query, {**variables, "after": after})
+        for key in path:
+            node = (node or {}).get(key) or {}
+        if not node:
+            return
+        yield from node.get("nodes", [])
+        if not node["pageInfo"]["hasNextPage"]:
+            return
+        after = node["pageInfo"]["endCursor"]
 
 
 def fetch() -> dict:
@@ -108,21 +148,21 @@ def fetch() -> dict:
             entry = langs.setdefault(name, {"size": 0, "color": edge["node"]["color"] or MUTED})
             entry["size"] += edge["size"]
 
-    # contributionsCollection spans at most one year, so walk year by year.
-    now = dt.datetime.now(dt.timezone.utc)
-    start = dt.datetime.fromisoformat(user["createdAt"].replace("Z", "+00:00"))
+    # Commits authored by the user on each repo's default branch, bucketed by
+    # local day. This is what the heatmap and streak count.
     days: dict[str, int] = {}
     commits = 0
-    cursor = start
-    while cursor < now:
-        end = min(cursor + dt.timedelta(days=365), now)
-        col = gql(YEAR_Q, {"login": LOGIN, "from": cursor.isoformat(), "to": end.isoformat()})[
-            "user"]["contributionsCollection"]
-        commits += col["totalCommitContributions"] + col["restrictedContributionsCount"]
-        for week in col["contributionCalendar"]["weeks"]:
-            for day in week["contributionDays"]:
-                days[day["date"]] = max(days.get(day["date"], 0), day["contributionCount"])
-        cursor = end
+    for repo in paginate(COMMIT_REPOS_Q, {"login": LOGIN}, ["user", "repositories"]):
+        if not repo["defaultBranchRef"]:
+            continue  # empty repository
+        owner, name = repo["nameWithOwner"].split("/", 1)
+        variables = {"owner": owner, "name": name, "uid": user["id"],
+                     "branch": f"refs/heads/{repo['defaultBranchRef']['name']}"}
+        for c in paginate(HISTORY_Q, variables, ["repository", "ref", "target", "history"]):
+            when = dt.datetime.fromisoformat(c["committedDate"].replace("Z", "+00:00"))
+            key = when.astimezone(TZ).date().isoformat()
+            days[key] = days.get(key, 0) + 1
+            commits += 1
 
     return {
         "stars": sum(r["stargazerCount"] for r in repos),
@@ -133,23 +173,27 @@ def fetch() -> dict:
         "commits": commits,
         "langs": langs,
         "days": days,
-        "today": now.date(),
+        "today": dt.datetime.now(TZ).date(),
     }
 
 
 def streaks(days: dict[str, int], today: dt.date) -> tuple[int, int, int, str]:
+    """Total commits, current streak and longest streak, in days."""
     total = sum(days.values())
+    active = sorted(dt.date.fromisoformat(d) for d, n in days.items() if n > 0)
     longest = run = 0
-    for date in sorted(days):
-        run = run + 1 if days[date] > 0 else 0
+    prev = None
+    for day in active:
+        run = run + 1 if prev and (day - prev).days == 1 else 1
         longest = max(longest, run)
+        prev = day
     current, day = 0, today
-    if days.get(day.isoformat(), 0) == 0:  # today not over yet
+    if days.get(day.isoformat(), 0) == 0:  # today is not over yet
         day -= dt.timedelta(days=1)
     while days.get(day.isoformat(), 0) > 0:
         current += 1
         day -= dt.timedelta(days=1)
-    first = min(days) if days else ""
+    first = active[0].isoformat() if active else ""
     return total, current, longest, first
 
 
@@ -243,7 +287,7 @@ def streak_svg(d: dict | None) -> str:
         total = current = longest = None
         since = ""
     cols = [
-        (fmt(total), "Total contributions", since, STRONG),
+        (fmt(total), "Total commits", since, STRONG),
         (fmt(current), "Current streak", "days in a row", FIRE),
         (fmt(longest), "Longest streak", "days", STRONG),
     ]
@@ -258,7 +302,7 @@ def streak_svg(d: dict | None) -> str:
         )
         if i:
             body.append(f'<line x1="{cx - 137}" y1="56" x2="{cx - 137}" y2="130" stroke="{BORDER}"/>')
-    return card(830, 150, "Contribution streak", "\n".join(body), "Contribution streak")
+    return card(830, 150, "Commit streak", "\n".join(body), "Commit streak")
 
 
 def heatmap_svg(d: dict | None) -> str:
@@ -278,7 +322,7 @@ def heatmap_svg(d: dict | None) -> str:
         n = days.get(day.isoformat(), 0)
         level = 0 if n == 0 else min(4, 1 + int(3 * n / peak))
         x, y = x0 + col * (size + gap), y0 + row * (size + gap)
-        cells.append(f'<rect x="{x}" y="{y}" width="{size}" height="{size}" rx="2.5" fill="{HEAT[level]}"><title>{day.isoformat()}: {n}</title></rect>')
+        cells.append(f'<rect x="{x}" y="{y}" width="{size}" height="{size}" rx="2.5" fill="{HEAT[level]}"><title>{day.isoformat()}: {n} commit{"" if n == 1 else "s"}</title></rect>')
         if row == 0 and day.month != last_month and col < 51:
             months.append(f'<text x="{x}" y="{y0 - 10}" class="l" style="font-size:11px">{day.strftime("%b")}</text>')
             last_month = day.month
@@ -290,7 +334,7 @@ def heatmap_svg(d: dict | None) -> str:
         legend.append(f'<rect x="{legend_x + 32 + i * 15}" y="{y0 + 7 * (size + gap) + 12}" width="11" height="11" rx="2" fill="{c}"/>')
     legend.append(f'<text x="{legend_x + 32 + 5 * 15 + 4}" y="{y0 + 7 * (size + gap) + 22}" class="l" style="font-size:11px">More</text>')
     body = "\n".join(months + cells + legend)
-    return card(830, 200, "Contributions · last 12 months", body, "Contribution heatmap for the last 12 months")
+    return card(830, 200, "Commits · last 12 months", body, "Commit heatmap for the last 12 months")
 
 
 def main() -> int:
@@ -303,7 +347,7 @@ def main() -> int:
     (OUT / "stats.svg").write_text(stats_svg(data), encoding="utf-8")
     (OUT / "top-langs.svg").write_text(langs_svg(data), encoding="utf-8")
     (OUT / "streak.svg").write_text(streak_svg(data), encoding="utf-8")
-    (OUT / "contributions.svg").write_text(heatmap_svg(data), encoding="utf-8")
+    (OUT / "commits.svg").write_text(heatmap_svg(data), encoding="utf-8")
     print(f"Wrote cards to {OUT}/")
     return 0
 

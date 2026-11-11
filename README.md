@@ -102,10 +102,10 @@ Full list on [Google Scholar](https://scholar.google.com/citations?user=D2Md-J4A
   <img src="assets/top-langs.svg" alt="Most used languages" width="49%" />
 </p>
 <p align="center">
-  <img src="assets/streak.svg" alt="Contribution streak" width="99%" />
+  <img src="assets/streak.svg" alt="Commit streak" width="99%" />
 </p>
 <p align="center">
-  <img src="assets/contributions.svg" alt="Contribution heatmap" width="99%" />
+  <img src="assets/commits.svg" alt="Commit heatmap" width="99%" />
 </p>
 
 <sub>Cards are generated daily by a [GitHub Action](.github/workflows/profile-cards.yml) in this repository, so they never depend on a third-party service.</sub>
