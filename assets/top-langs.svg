@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="495" height="195" viewBox="0 0 495 195" role="img" aria-label="Most used languages">
+<title>Most used languages</title>
+<style>
+  text { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; }
+  .t { font-size: 17px; font-weight: 600; fill: #22D3EE; }
+  .l { font-size: 13px; fill: #8B949E; }
+  .v { font-size: 22px; font-weight: 700; fill: #E6EDF3; }
+  .s { font-size: 13px; fill: #C9D1D9; }
+  .fade { opacity: 0; animation: in .6s ease-out forwards; }
+  @keyframes in { to { opacity: 1; } }
+</style>
+<rect x="0.5" y="0.5" width="494" height="194" rx="10" fill="#0D1117" stroke="#30363D"/>
+<text x="24" y="36" class="t">Most used languages</text>
+<rect x="24" y="56" width="447" height="10" rx="5" fill="#30363D"/>
+<text x="24" y="100" class="l">Generated daily by GitHub Actions</text>
+</svg>

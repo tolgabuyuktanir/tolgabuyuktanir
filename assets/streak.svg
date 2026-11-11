@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="830" height="150" viewBox="0 0 830 150" role="img" aria-label="Contribution streak">
+<title>Contribution streak</title>
+<style>
+  text { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; }
+  .t { font-size: 17px; font-weight: 600; fill: #22D3EE; }
+  .l { font-size: 13px; fill: #8B949E; }
+  .v { font-size: 22px; font-weight: 700; fill: #E6EDF3; }
+  .s { font-size: 13px; fill: #C9D1D9; }
+  .fade { opacity: 0; animation: in .6s ease-out forwards; }
+  @keyframes in { to { opacity: 1; } }
+</style>
+<rect x="0.5" y="0.5" width="829" height="149" rx="10" fill="#0D1117" stroke="#30363D"/>
+<text x="24" y="36" class="t">Contribution streak</text>
+<g class="fade" style="animation-delay:0ms"><text x="140" y="84" text-anchor="middle" class="v" style="font-size:30px;fill:#E6EDF3">—</text><text x="140" y="110" text-anchor="middle" class="s">Total contributions</text><text x="140" y="128" text-anchor="middle" class="l" style="font-size:12px"></text></g>
+<g class="fade" style="animation-delay:100ms"><text x="415" y="84" text-anchor="middle" class="v" style="font-size:30px;fill:#F97316">—</text><text x="415" y="110" text-anchor="middle" class="s">Current streak</text><text x="415" y="128" text-anchor="middle" class="l" style="font-size:12px">days in a row</text></g>
+<line x1="278" y1="56" x2="278" y2="130" stroke="#30363D"/>
+<g class="fade" style="animation-delay:200ms"><text x="690" y="84" text-anchor="middle" class="v" style="font-size:30px;fill:#E6EDF3">—</text><text x="690" y="110" text-anchor="middle" class="s">Longest streak</text><text x="690" y="128" text-anchor="middle" class="l" style="font-size:12px">days</text></g>
+<line x1="553" y1="56" x2="553" y2="130" stroke="#30363D"/>
+</svg>
