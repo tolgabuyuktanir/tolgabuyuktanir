@@ -12,7 +12,7 @@
 <rect x="0.5" y="0.5" width="494" height="194" rx="10" fill="#0D1117" stroke="#30363D"/>
 <text x="24" y="36" class="t">GitHub stats</text>
 <g class="fade" style="animation-delay:0ms"><rect x="24" y="56" width="3" height="44" rx="1.5" fill="#22D3EE"/><text x="38" y="76" class="v">9</text><text x="38" y="96" class="l">Total stars</text></g>
-<g class="fade" style="animation-delay:80ms"><rect x="174" y="56" width="3" height="44" rx="1.5" fill="#22D3EE"/><text x="188" y="76" class="v">213</text><text x="188" y="96" class="l">Commits</text></g>
+<g class="fade" style="animation-delay:80ms"><rect x="174" y="56" width="3" height="44" rx="1.5" fill="#22D3EE"/><text x="188" y="76" class="v">446</text><text x="188" y="96" class="l">Commits</text></g>
 <g class="fade" style="animation-delay:160ms"><rect x="324" y="56" width="3" height="44" rx="1.5" fill="#22D3EE"/><text x="338" y="76" class="v">3</text><text x="338" y="96" class="l">Pull requests</text></g>
 <g class="fade" style="animation-delay:240ms"><rect x="24" y="122" width="3" height="44" rx="1.5" fill="#22D3EE"/><text x="38" y="142" class="v">1</text><text x="38" y="162" class="l">Issues</text></g>
 <g class="fade" style="animation-delay:320ms"><rect x="174" y="122" width="3" height="44" rx="1.5" fill="#22D3EE"/><text x="188" y="142" class="v">20</text><text x="188" y="162" class="l">Public repos</text></g>
