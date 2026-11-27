@@ -12,8 +12,8 @@
 <rect x="0.5" y="0.5" width="494" height="194" rx="10" fill="#0D1117" stroke="#30363D"/>
 <text x="24" y="36" class="t">Most used languages</text>
 <clipPath id="bar"><rect x="24" y="56" width="447" height="10" rx="5"/></clipPath><g clip-path="url(#bar)">
-<rect x="24.00" y="56" width="427.74" height="10" fill="#3572A5"/>
-<rect x="451.24" y="56" width="8.01" height="10" fill="#f1e05a"/>
+<rect x="24.00" y="56" width="427.67" height="10" fill="#3572A5"/>
+<rect x="451.17" y="56" width="8.08" height="10" fill="#f1e05a"/>
 <rect x="458.75" y="56" width="4.04" height="10" fill="#e34c26"/>
 <rect x="462.29" y="56" width="3.56" height="10" fill="#555555"/>
 <rect x="465.35" y="56" width="3.02" height="10" fill="#663399"/>
