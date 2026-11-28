@@ -12,16 +12,16 @@
 <rect x="0.5" y="0.5" width="494" height="194" rx="10" fill="#0D1117" stroke="#30363D"/>
 <text x="24" y="36" class="t">Most used languages</text>
 <clipPath id="bar"><rect x="24" y="56" width="447" height="10" rx="5"/></clipPath><g clip-path="url(#bar)">
-<rect x="24.00" y="56" width="427.67" height="10" fill="#3572A5"/>
-<rect x="451.17" y="56" width="8.08" height="10" fill="#f1e05a"/>
-<rect x="458.75" y="56" width="4.04" height="10" fill="#e34c26"/>
-<rect x="462.29" y="56" width="3.56" height="10" fill="#555555"/>
-<rect x="465.35" y="56" width="3.02" height="10" fill="#663399"/>
+<rect x="24.00" y="56" width="427.58" height="10" fill="#3572A5"/>
+<rect x="451.08" y="56" width="8.12" height="10" fill="#f1e05a"/>
+<rect x="458.70" y="56" width="4.04" height="10" fill="#e34c26"/>
+<rect x="462.24" y="56" width="3.56" height="10" fill="#555555"/>
+<rect x="465.30" y="56" width="3.07" height="10" fill="#663399"/>
 <rect x="467.87" y="56" width="2.20" height="10" fill="#f34b7d"/>
 <rect x="469.57" y="56" width="1.61" height="10" fill="#b07219"/>
 <rect x="470.68" y="56" width="0.82" height="10" fill="#DA5B0B"/>
 </g>
-<g class="fade" style="animation-delay:0ms"><circle cx="29" cy="94" r="5" fill="#3572A5"/><text x="42" y="98" class="s">Python</text><text x="224" y="98" class="l" text-anchor="end">95.6%</text></g>
+<g class="fade" style="animation-delay:0ms"><circle cx="29" cy="94" r="5" fill="#3572A5"/><text x="42" y="98" class="s">Python</text><text x="224" y="98" class="l" text-anchor="end">95.5%</text></g>
 <g class="fade" style="animation-delay:60ms"><circle cx="254" cy="94" r="5" fill="#f1e05a"/><text x="267" y="98" class="s">JavaScript</text><text x="449" y="98" class="l" text-anchor="end">1.7%</text></g>
 <g class="fade" style="animation-delay:120ms"><circle cx="29" cy="118" r="5" fill="#e34c26"/><text x="42" y="122" class="s">HTML</text><text x="224" y="122" class="l" text-anchor="end">0.8%</text></g>
 <g class="fade" style="animation-delay:180ms"><circle cx="254" cy="118" r="5" fill="#555555"/><text x="267" y="122" class="s">C</text><text x="449" y="122" class="l" text-anchor="end">0.7%</text></g>
